@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ matches });
   } catch (_error) {
         return NextResponse.json(
-          { _error: 'Failed to fetch matches' },
+          { error: 'Failed to fetch matches' },
           { status: 500 }
         );
   }

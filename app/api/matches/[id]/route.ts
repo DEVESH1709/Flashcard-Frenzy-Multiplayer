@@ -4,10 +4,10 @@ import { ObjectId } from 'mongodb'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const matchId = (await params).id;
+  const { id: matchId } = await context.params;
     console.log('Fetching match with ID:', matchId);
 
     if (!matchId || typeof matchId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(matchId)) {

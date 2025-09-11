@@ -13,7 +13,7 @@ type MatchSummary = {
 
 export default function DashboardPage() {
   const [userId, setUserId] = useState<string>('');
-  const [matches, setMatches] = useState<MatchSummary[]>([]);
+  const [, setMatches] = useState<MatchSummary[]>([]);
   const [ongoingMatch, setOngoingMatch] = useState<MatchSummary | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);

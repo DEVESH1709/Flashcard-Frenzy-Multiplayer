@@ -4,12 +4,11 @@ import { ObjectId } from 'mongodb';
 import { createClient } from '@supabase/supabase-js';
 
 type RouteContext = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
-export async function POST(request: NextRequest, context: any) {
-  const matchId = context.params.id;
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  const { id: matchId } = await context.params;
 
   const { userId, answer } = await request.json();
   const db = await connectToDatabase();
@@ -58,9 +57,9 @@ export async function POST(request: NextRequest, context: any) {
   currentQuestionAnswers[userId] = answer;
 
   const playerIds =
-    match.players
-      ?.map((p: { id: string }) => p?.id?.toString())
-      .filter(Boolean) || [];
+    Array.isArray(match.players)
+      ? match.players.map((p: { id: string }) => p?.id?.toString()).filter(Boolean)
+      : [];
 
   const answeredBy = Object.keys(currentQuestionAnswers);
 
@@ -112,12 +111,10 @@ export async function POST(request: NextRequest, context: any) {
   }
 
   try {
-    const updateResult = await matchesCol.updateOne(
+    await matchesCol.updateOne(
       { _id: new ObjectId(matchId) },
       updateData
     );
-
-    const updatedMatch = await matchesCol.findOne({ _id: new ObjectId(matchId) });
 
     if (allPlayersAnswered) {
       const nextQuestionIndex = (match.currentQuestion || 0) + 1;
