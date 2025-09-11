@@ -8,12 +8,9 @@ type RouteContext = {
     id: string;
   };
 };
+export async function POST(request: NextRequest, context: any) {
+  const matchId = context.params.id;
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
-  const matchId = params.id;
   const { userId, answer } = await request.json();
   const db = await connectToDatabase();
   const matchesCol = db.collection('matches');
