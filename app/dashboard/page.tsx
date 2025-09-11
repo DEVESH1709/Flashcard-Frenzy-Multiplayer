@@ -92,7 +92,25 @@ export default function DashboardPage() {
         throw new Error(data.error || 'Failed to start match');
       }
 
-      if (data.matchId) {
+      if (data.status === 'waiting') {
+        setMessage('Searching for an opponent... Please wait.');
+        // Start polling for a match
+        const poll = setInterval(async () => {
+          const ongoingRes = await fetch('/api/matches/ongoing', {
+            cache: 'no-store',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`
+            }
+          });
+          if (ongoingRes.ok) {
+            const ongoingData = await ongoingRes.json();
+            if (ongoingData.match && ongoingData.match._id) {
+              clearInterval(poll);
+              router.push(`/match/${ongoingData.match._id}`);
+            }
+          }
+        }, 2000);
+      } else if (data.matchId) {
         router.push(`/match/${data.matchId}`);
       } else {
         setMessage('Failed to create match. Please try again.');
@@ -105,19 +123,19 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-4 flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100">
         <span className="text-lg text-gray-600">Loading...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-4">
+    <div className="min-h-screen flex bg-indigo-200 items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col items-center border border-gray-200">
         <h1 className="text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow">Dashboard</h1>
         <button
           onClick={startMatch}
-          className="w-full py-3 px-6 rounded-xl font-bold text-lg cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 mb-4"
+          className="w-full py-3 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 mb-4"
         >
           {ongoingMatch ? 'Continue Match' : 'Start New Match'}
         </button>

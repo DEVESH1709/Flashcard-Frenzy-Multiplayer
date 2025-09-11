@@ -32,15 +32,15 @@ export async function POST(request: NextRequest) {
     const waitingCol = db.collection('waiting');
     const matchesCol = db.collection('matches');
 
-  const waiting = await waitingCol.findOne();
-  if (!waiting) {
+  // Atomically find and remove the first waiting user
+  const waiting = await waitingCol.findOneAndDelete({});
+  if (!waiting || !waiting.value) {
     await waitingCol.insertOne({ userId, joinedAt: new Date() });
     return Response.json({ status: 'waiting' });
   }
 
-  const player1 = waiting.userId;
+  const player1 = waiting.value.userId;
   const player2 = userId;
-  await waitingCol.deleteOne({ _id: waiting._id });
   const flashcards = await db.collection('flashcards').aggregate([{ $sample: { size: 5 } }]).toArray();
 
   const newMatch = {

@@ -29,8 +29,8 @@ export default function Navbar() {
   return (
     <nav className="backdrop-blur-md bg-white/20 border-b border-gray-200 shadow-lg text-gray-900 px-6 py-3 flex items-center justify-between rounded-b-2xl mx-2 mt-2">
       <div className="flex items-center gap-6">
-        <Link href="/dashboard" className="font-semibold text-lg text-white hover:text-blue-700 transition-colors">Dashboard</Link>
-        <Link href="/history" className="font-semibold text-lg text-white hover:text-purple-700 transition-colors">History</Link>
+  <Link href="/dashboard" className="font-semibold text-lg text-gray-900 hover:text-blue-700 transition-colors">Dashboard</Link>
+  <Link href="/history" className="font-semibold text-lg text-gray-900 hover:text-purple-700 transition-colors">History</Link>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full shadow">
@@ -41,7 +41,7 @@ export default function Navbar() {
         </div>
         <button
           onClick={handleLogout}
-          className="bg-gradient-to-r from-white-500 to-blue-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:from-red-600 hover:to-pink-600 transition-all duration-200"
+          className="bg-gradient-to-r from-blue-100 to-blue-500 text-white px-4 py-2 rounded-xl cursor-pointer font-semibold shadow hover:from-blue-600 hover:to-white-600 transition-all duration-200"
         >
           Logout
         </button>
