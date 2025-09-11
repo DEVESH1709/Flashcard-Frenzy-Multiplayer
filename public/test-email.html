@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Email Sending</h1>
+    <button id="testEmail">Send Test Email</button>
+    <div id="result"></div>
+
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://zertsobdsrsdealxggen.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplcnRzb2Jkc3JzZGVhbHhnZ2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTg2MzMsImV4cCI6MjA3MzA3NDYzM30.laVCbAaBqX9XDERa3s3crxkRLl2Cw1g3o-dF0b0Jw5M';
+        
+        // Create the Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // Add click event listener after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('testEmail').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Sending test email...';
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithOtp({
+                    email: 'test@example.com',
+                    options: {
+                        emailRedirectTo: 'http://localhost:3000/auth/callback',
+                    },
+                });
+
+                if (error) {
+                    resultDiv.textContent = `Error: ${error.message}`;
+                    console.error('Error:', error);
+                } else {
+                    resultDiv.textContent = 'Check your email for the test message! (Check spam folder too)';
+                    console.log('Success:', data);
+                }
+            } catch (err) {
+                resultDiv.textContent = `Error: ${err.message}`;
+                console.error('Exception:', err);
+            }
+            });
+        });
+    </script>
+</body>
+</html>
