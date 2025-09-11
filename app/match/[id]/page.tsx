@@ -5,11 +5,6 @@ import { supabase } from '../../../lib/supabaseClient';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 
-type Question = {
-  question: string;
-  answer: string;
-};
-
 export default function MatchPage() {
   const router = useRouter();
   const { id: matchId } = useParams()!;
@@ -48,7 +43,7 @@ export default function MatchPage() {
   };
   const [announcement, setAnnouncement] = useState<string>('');
   const [ended, setEnded] = useState<boolean>(false);
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

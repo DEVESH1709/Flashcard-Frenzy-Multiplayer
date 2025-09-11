@@ -9,6 +9,7 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient>;
 }
 
+
 const options = {
   tls: true,
   tlsAllowInvalidCertificates: false, 

@@ -19,6 +19,10 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
+    interface SupabaseUser {
+      id: string;
+      email: string;
+    }
   const handleUser = async (user: any) => {
     try {
       const response = await fetch('/api/users', {
@@ -80,7 +84,7 @@ export default function LoginPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {message && (
             <div className={`mb-4 p-4 rounded-md ${messageType === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-              {message}
+                {message.replace("'", "&apos;")}
             </div>
           )}
           {redirectUrl && (
