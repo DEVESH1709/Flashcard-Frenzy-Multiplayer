@@ -112,21 +112,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4">
-  <h1 className="text-2xl font-bold mb-6 text-black">Dashboard</h1>
-  <div className="mb-8 p-4 bg-gray-100 rounded-lg text-black">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-4">
+      <div className="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col items-center border border-gray-200">
+        <h1 className="text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow">Dashboard</h1>
         <button
           onClick={startMatch}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full py-3 px-6 rounded-xl font-bold text-lg cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 mb-4"
         >
           {ongoingMatch ? 'Continue Match' : 'Start New Match'}
         </button>
         {ongoingMatch && (
-          <p className="mt-2 text-blue-900 font-semibold">
+          <p className="mt-2 text-purple-700 font-semibold text-center">
             You have an ongoing match. Click the button above to continue.
           </p>
         )}
-        {message && <p className="mt-2 text-red-800 font-semibold">{message}</p>}
+        {message && <p className="mt-4 text-red-600 font-semibold text-center">{message}</p>}
       </div>
     </div>
   );

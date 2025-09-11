@@ -27,17 +27,25 @@ export default function Navbar() {
 
   if (!user) return null;
   return (
-    <nav className="bg-gray-800 text-white p-4 flex justify-between">
-      <div className="space-x-4">
-        <Link href="/dashboard" className="hover:underline">Dashboard</Link>
-        <Link href="/history" className="hover:underline">History</Link>
+    <nav className="backdrop-blur-md bg-white/20 border-b border-gray-200 shadow-lg text-gray-900 px-6 py-3 flex items-center justify-between rounded-b-2xl mx-2 mt-2">
+      <div className="flex items-center gap-6">
+        <Link href="/dashboard" className="font-semibold text-lg text-white hover:text-blue-700 transition-colors">Dashboard</Link>
+        <Link href="/history" className="font-semibold text-lg text-white hover:text-purple-700 transition-colors">History</Link>
       </div>
-      <button
-        onClick={handleLogout}
-        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-      >
-        Logout
-      </button>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full shadow">
+          <span className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+            {user[0]?.toUpperCase()}
+          </span>
+          <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">{user}</span>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="bg-gradient-to-r from-white-500 to-blue-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:from-red-600 hover:to-pink-600 transition-all duration-200"
+        >
+          Logout
+        </button>
+      </div>
     </nav>
   );
 }
