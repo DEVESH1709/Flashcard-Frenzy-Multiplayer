@@ -3,8 +3,8 @@ import {connectToDatabase} from '../../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { createClient } from '@supabase/supabase-js';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const matchId = params.id;
+export async function POST(request: NextRequest, context: { params: { id: string } }) {
+  const matchId = context.params.id;
   const { userId, answer } = await request.json();
   const db = await connectToDatabase();
   const matchesCol = db.collection('matches');
