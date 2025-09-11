@@ -5,9 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const matchId = (await params).id;
+  const matchId = context.params.id;
   const { userId, answer } = await request.json();
   const db = await connectToDatabase();
   const matchesCol = db.collection('matches');
