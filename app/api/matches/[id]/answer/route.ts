@@ -56,7 +56,7 @@ export async function POST(
 
   currentQuestionAnswers[userId] = answer;
   
-  const playerIds = match.players?.map((p: any) => p?.id?.toString()).filter(Boolean) || [];
+  const playerIds = match.players?.map((p: { id: string }) => p?.id?.toString()).filter(Boolean) || [];
   
   const answeredBy = Object.keys(currentQuestionAnswers);
   
@@ -80,7 +80,10 @@ export async function POST(
   console.log('Current question answers:', currentQuestionAnswers);
   console.log('---\n');
 
-  const updateData: any = {
+  const updateData: {
+    $set: Record<string, unknown>;
+    $inc: Record<string, number>;
+  } = {
     $set: {
       scores: currentScores,
       lastUpdated: new Date(),
@@ -106,7 +109,7 @@ export async function POST(
       const scores = { ...currentScores };
       const winner = Object.entries(scores).sort((a, b) => (b[1] as number) - (a[1] as number))[0];
       if (winner) {
-        const winnerPlayer = match.players.find((p: any) => p.id === winner[0]);
+  const winnerPlayer = match.players.find((p: { id: string }) => p.id === winner[0]);
         if (winnerPlayer) {
           updateData.$set.winner = winnerPlayer.email;
         }
@@ -145,13 +148,13 @@ export async function POST(
         });
         console.log('Broadcast result:', broadcastResult);
         } else {
-          const scores = updateData.$set.scores || {};
+          const scores: Record<string, number> = (updateData.$set.scores && typeof updateData.$set.scores === 'object') ? updateData.$set.scores as Record<string, number> : {};
           const players = match.players || [];
-          let winnerInfo = { email: 'Draw', scores };
+          const winnerInfo: { email: string; scores: Record<string, number> } = { email: 'Draw', scores };
           
           const winnerEntry = Object.entries(scores).sort((a, b) => (b[1] as number) - (a[1] as number))[0];
           if (winnerEntry) {
-            const winnerPlayer = players.find((p: any) => p.id === winnerEntry[0]);
+            const winnerPlayer = players.find((p: { id: string }) => p.id === winnerEntry[0]);
             if (winnerPlayer) {
               winnerInfo.email = winnerPlayer.email;
             }
@@ -164,12 +167,12 @@ export async function POST(
           });
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating match:', error);
       return Response.json({ 
         success: false, 
         error: 'Failed to update match',
-        message: error?.message || 'Unknown error occurred'
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
       }, { status: 500 });
     }
     const responseData = {

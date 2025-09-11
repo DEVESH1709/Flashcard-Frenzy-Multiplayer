@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
     const waitingCol = db.collection('waiting');
     const matchesCol = db.collection('matches');
 
-  // Atomically find and remove the first waiting user
   const waiting = await waitingCol.findOneAndDelete({});
   if (!waiting || !waiting.value) {
     await waitingCol.insertOne({ userId, joinedAt: new Date() });

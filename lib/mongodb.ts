@@ -14,14 +14,8 @@ const options = {
   tls: true,
   tlsAllowInvalidCertificates: false, 
 };
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
 
-if (!global._mongoClientPromise) {
-  client = new MongoClient(uri, options);
-  global._mongoClientPromise = client.connect();
-}
-clientPromise = global._mongoClientPromise;
+const clientPromise: Promise<MongoClient> = global._mongoClientPromise ?? (global._mongoClientPromise = new MongoClient(uri, options).connect());
 
 export async function connectToDatabase() {
   const client = await clientPromise;

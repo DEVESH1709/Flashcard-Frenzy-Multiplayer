@@ -24,12 +24,12 @@ export default function HistoryPage() {
         fetchMatches(data.user.id);
       }
     });
-  }, []);
+  }, [router]);
 
   const fetchMatches = async (uid: string) => {
     const res = await fetch(`/api/matches?userId=${uid}`);
     const data = await res.json();
-    const finished = data.matches.filter((m: any) => m.status === 'finished');
+    const finished = data.matches.filter((m: { status: string }) => m.status === 'finished');
     setMatches(finished);
   };
 

@@ -1,8 +1,7 @@
 'use client';
-
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, ChangeEvent, KeyboardEvent } from 'react';
 import React from 'react';
 
 export default function MatchPage() {
@@ -28,7 +27,7 @@ export default function MatchPage() {
     }
   }, [scores, userId]);
   
-  const testScoreUpdate = () => {
+  const testScoreUpdate = useCallback(() => {
     console.log('--- Testing Score Update ---');
     console.log('Current scores:', scores);
     console.log('Current userId:', userId);
@@ -40,7 +39,7 @@ export default function MatchPage() {
     
     console.log('New scores:', newScores);
     setScores(newScores);
-  };
+  }, [scores, userId]);
   const [announcement, setAnnouncement] = useState<string>('');
   const [ended, setEnded] = useState<boolean>(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -159,8 +158,8 @@ export default function MatchPage() {
     return () => {
       channel.unsubscribe();
     };
-  }, [matchId, userId]);
-  const submitAnswer = async () => {
+  }, [matchId, userId, router]);
+  const submitAnswer = useCallback(async () => {
     if (!answer.trim() || !userId) return;
 
     try {
@@ -219,7 +218,7 @@ export default function MatchPage() {
         }
       }
     }
-  };
+  }, [answer, userId, matchId]);
 
   return (
     <div className="min-h-screen bg-gray-900 p-4">
@@ -235,8 +234,8 @@ export default function MatchPage() {
             <input
               type="text"
               value={answer}
-              onChange={e => setAnswer(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && submitAnswer()}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setAnswer(e.target.value)}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') submitAnswer(); }}
               disabled={ended}
               placeholder="Type your answer..."
               className="w-full px-4 py-3 text-lg text-black bg-white border-2 border-gray-300 rounded-lg mb-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition"
@@ -271,7 +270,7 @@ export default function MatchPage() {
               aria-live="polite" 
               className={`p-4 mb-6 rounded-lg text-center font-medium ${announcement.includes('✅') ? 'bg-green-900/50' : 'bg-yellow-900/50'} text-white`}
             >
-              {announcement}
+              {announcement.replace("'", "&apos;")}
             </div>
           )}
         </div>

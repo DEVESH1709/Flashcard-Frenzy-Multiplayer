@@ -94,7 +94,6 @@ export default function DashboardPage() {
 
       if (data.status === 'waiting') {
         setMessage('Searching for an opponent... Please wait.');
-        // Start polling for a match
         const poll = setInterval(async () => {
           const ongoingRes = await fetch('/api/matches/ongoing', {
             cache: 'no-store',

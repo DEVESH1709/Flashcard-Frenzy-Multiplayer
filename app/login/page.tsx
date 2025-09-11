@@ -2,7 +2,7 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../../lib/supabaseClient';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
@@ -19,11 +19,7 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-    interface SupabaseUser {
-      id: string;
-      email: string;
-    }
-  const handleUser = async (user: any) => {
+  const handleUser = useCallback(async (user: { id: string; email: string }) => {
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -43,7 +39,7 @@ export default function LoginPage() {
       setMessage('An error occurred while processing your request');
       setMessageType('error');
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: userData, error: userError }) => {
@@ -53,18 +49,20 @@ export default function LoginPage() {
         }
         return;
       }
-      if (userData && userData.user) handleUser(userData.user);
+      if (userData && userData.user) {
+        handleUser({ id: userData.user.id, email: userData.user.email ?? '' });
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session) => {
       if (event === 'SIGNED_IN' && session && session.user) {
-        handleUser(session.user);
+        handleUser({ id: session.user.id, email: session.user.email ?? '' });
       }
     });
 
     return () => {
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [handleUser]);
 
   const [redirectUrl, setRedirectUrl] = useState<string>('');
 
@@ -84,7 +82,7 @@ export default function LoginPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {message && (
             <div className={`mb-4 p-4 rounded-md ${messageType === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-                {message.replace("'", "&apos;")}
+                {message && message.replace("'", "&apos;")}
             </div>
           )}
           {redirectUrl && (
@@ -111,7 +109,7 @@ export default function LoginPage() {
             />
           )}
           <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Don't have an account? Sign up above.</p>
+            <p>Don&apos;t have an account? Sign up above.</p>
             <p className="mt-2">
               Check your email after signing up to confirm your account.
             </p>
