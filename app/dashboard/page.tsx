@@ -48,8 +48,8 @@ export default function DashboardPage() {
         if (matchesRes.ok) {
           const matchesData = await matchesRes.json();
           const finishedMatches = matchesData.matches
-            .filter((m: any) => m.status === 'finished')
-            .map((m: any) => ({
+            .filter((m: { status: string }) => m.status === 'finished')
+            .map((m: { winner?: string; _id: { toString(): string }; [key: string]: unknown }) => ({
               ...m,
               winnerEmail: m.winner || 'Draw',
               _id: m._id.toString() 
@@ -115,9 +115,13 @@ export default function DashboardPage() {
       } else {
         setMessage('Failed to create match. Please try again.');
       }
-    } catch (error: any) {
-      console.error('Error starting match:', error);
-      setMessage(error.message || 'Failed to start match');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error starting match:', error);
+        setMessage(error.message || 'Failed to start match');
+      } else {
+        setMessage('Failed to start match');
+      }
     }
   };
 

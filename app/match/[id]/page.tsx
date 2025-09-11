@@ -64,7 +64,7 @@ export default function MatchPage() {
     });
 
     channel
-      .on('broadcast', { event: 'new-question' }, async (payload) => {
+  .on('broadcast', { event: 'new-question' }, async (payload: { payload: { question: string } }) => {
         console.log('Received new question:', payload);
         setQuestion(payload.payload.question);
         setAnswer('');
@@ -91,7 +91,7 @@ export default function MatchPage() {
           console.error('Error fetching updated match state:', error);
         }
       })
-      .on('broadcast', { event: 'game-finished' }, (payload) => {
+  .on('broadcast', { event: 'game-finished' }, (payload: { payload: { winner: string, scores: { [key: string]: number } } }) => {
         console.log('Game finished:', payload);
         setEnded(true);
         setAnnouncement(
@@ -103,7 +103,7 @@ export default function MatchPage() {
       })
       .subscribe();
 
-    channel.subscribe((status, error) => {
+  channel.subscribe((status: string, error?: Error) => {
       console.log('Channel status:', status);
       if (error) {
         console.error('Channel error:', error);
@@ -119,8 +119,8 @@ export default function MatchPage() {
     channelRef.current = channel;
 
     fetch(`/api/matches/${matchId}`)
-      .then(res => res.json())
-      .then(data => {
+  .then((res: Response) => res.json())
+  .then((data: { match?: any }) => {
         console.log('Match data:', data); 
         if (!data.match) {
           setQuestion('No match found');
@@ -174,7 +174,13 @@ export default function MatchPage() {
         body: JSON.stringify({ userId, answer }),
       });
 
-      const result = await response.json();
+      const result: {
+        scores?: { [key: string]: number };
+        correct?: boolean;
+        message?: string;
+        allPlayersAnswered?: boolean;
+        error?: string;
+      } = await response.json();
       console.log('Answer submission result:', result);
       
       if (response.ok) {
