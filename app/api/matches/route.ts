@@ -64,8 +64,9 @@ export async function POST(request: NextRequest) {
     }).toArray();
     
     const emailMap: Record<string, string> = {};
-    userEmails.forEach((u: any) => { 
-  emailMap[(u as { id: string; email: string }).id] = (u as { id: string; email: string }).email; 
+    userEmails.forEach((u) => {
+      const userDoc = u as unknown as { id: string; email: string };
+      emailMap[userDoc.id] = userDoc.email;
     });
     
     await matchesCol.updateOne(

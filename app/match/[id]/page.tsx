@@ -120,7 +120,7 @@ export default function MatchPage() {
 
     fetch(`/api/matches/${matchId}`)
   .then((res: Response) => res.json())
-  .then((data: { match?: any }) => {
+  .then((data: { match?: { status: string; currentQuestion: number; questions: { question: string }[]; scores: { [key: string]: number }; hostId: string } }) => {
         console.log('Match data:', data); 
         if (!data.match) {
           setQuestion('No match found');
