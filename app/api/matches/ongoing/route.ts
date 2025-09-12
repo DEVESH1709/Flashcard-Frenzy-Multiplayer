@@ -18,14 +18,15 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    let user: any = null;
+
+    let user: { id: string } | null = null;
     try {
       const result = await supabase.auth.getUser(token);
-      user = result.data?.user ?? null;
+      user = result.data?.user ? { id: result.data.user.id } : null;
       if (result.error) {
         console.error('Auth error:', result.error);
       }
-    } catch (err) {
+    } catch {
       return NextResponse.json({ match: null }, { status: 200 });
     }
 

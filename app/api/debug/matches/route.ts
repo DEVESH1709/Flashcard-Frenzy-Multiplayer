@@ -6,10 +6,11 @@ export async function GET() {
     const db = await connectToDatabase();
     const matches = await db.collection('matches').find({}).toArray();
     return NextResponse.json({ matches });
-  } catch (_error) {
-        return NextResponse.json(
-          { error: 'Failed to fetch matches' },
-          { status: 500 }
-        );
+  } catch (error) {
+    console.error('Failed to fetch matches debug route:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch matches' },
+      { status: 500 }
+    );
   }
 }
