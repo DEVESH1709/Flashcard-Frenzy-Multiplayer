@@ -14,21 +14,23 @@ export async function GET(request: NextRequest) {
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
-      return NextResponse.json(
-        { error: 'No authorization header' },
-        { status: 401 }
-      );
+      return NextResponse.json({ match: null }, { status: 200 });
     }
 
     const token = authHeader.split(' ')[1];
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      console.error('Auth error:', error);
-      return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
-      );
+    let user: any = null;
+    try {
+      const result = await supabase.auth.getUser(token);
+      user = result.data?.user ?? null;
+      if (result.error) {
+        console.error('Auth error:', result.error);
+      }
+    } catch (err) {
+      return NextResponse.json({ match: null }, { status: 200 });
+    }
+
+    if (!user) {
+      return NextResponse.json({ match: null }, { status: 200 });
     }
 
     const ongoingMatch = await matchesCol.findOne({
