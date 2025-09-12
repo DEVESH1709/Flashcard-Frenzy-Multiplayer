@@ -32,9 +32,21 @@ export async function POST(request: NextRequest) {
     const waitingCol = db.collection('waiting');
     const matchesCol = db.collection('matches');
 
-  const waiting = await waitingCol.findOneAndDelete({});
+  const staleThreshold = new Date(Date.now() - 2 * 60 * 1000);
+  await waitingCol.deleteMany({ joinedAt: { $lt: staleThreshold } });
+  const waiting = await waitingCol.findOneAndDelete(
+    { userId: { $ne: userId } },
+    { sort: { joinedAt: 1 } }
+  );
+
   if (!waiting || !waiting.value) {
-    await waitingCol.insertOne({ userId, joinedAt: new Date() });
+    const alreadyWaiting = await waitingCol.findOne({ userId });
+    if (!alreadyWaiting) {
+      await waitingCol.insertOne({ userId, joinedAt: new Date() });
+      console.log(`User ${userId} is waiting for an opponent`);
+    } else {
+      console.log(`User ${userId} already in waiting queue`);
+    }
     return Response.json({ status: 'waiting' });
   }
 
