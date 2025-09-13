@@ -1,6 +1,6 @@
 'use client';
 import { supabase } from '../../lib/supabaseClient';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 type MatchSummary = {
@@ -13,11 +13,12 @@ type MatchSummary = {
 
 export default function DashboardPage() {
   const [userId, setUserId] = useState<string>('');
-  const [, setMatches] = useState<MatchSummary[]>([]);
   const [ongoingMatch, setOngoingMatch] = useState<MatchSummary | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [matchButtonDisabled, setMatchButtonDisabled] = useState(false);
   const router = useRouter();
+  const cancelRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -41,25 +42,9 @@ export default function DashboardPage() {
           if (ongoingData.match) {
             setOngoingMatch(ongoingData.match);
           }
-        } else {
-          console.error('Failed to fetch ongoing match:', await ongoingRes.text());
         }
-        const matchesRes = await fetch(`/api/matches?userId=${user.id}`, { cache: 'no-store' });
-        if (matchesRes.ok) {
-          const matchesData = await matchesRes.json();
-          const finishedMatches = matchesData.matches
-            .filter((m: { status: string }) => m.status === 'finished')
-            .map((m: { winner?: string; _id: { toString(): string }; [key: string]: unknown }) => ({
-              ...m,
-              winnerEmail: m.winner || 'Draw',
-              _id: m._id.toString() 
-            }));
-          setMatches(finishedMatches);
-        } else {
-          console.error('Failed to fetch match history:', await matchesRes.text());
-        }
-      } catch (error) {
-        console.error('Error loading matches:', error);
+        // Removed match history fetch and setMatches as not used in UI
+      } catch {
         setMessage('Failed to load matches. Please try refreshing the page.');
       } finally {
         setLoading(false);
@@ -69,58 +54,96 @@ export default function DashboardPage() {
   }, [router]);
 
   const startMatch = async () => {
+    if (matchButtonDisabled) return;
+    setMatchButtonDisabled(true);
     try {
       if (ongoingMatch) {
         router.push(`/match/${ongoingMatch._id}`);
+        setMatchButtonDisabled(false);
         return;
       }
+  const { data: { session } } = await supabase.auth.getSession();
 
-      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setMessage('Authentication expired. Please log in again.');
+        router.push('/login');
+        return;
+      }
 
       const response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ userId }),
       });
-      
-      const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start match');
+      let data: Record<string, unknown> | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Ignore JSON parse error, will handle below
       }
 
-      if (data.status === 'waiting') {
+      if (!response.ok) {
+        throw new Error((data && typeof data.error === 'string') ? data.error : 'Failed to start match');
+      }
+
+      if (data && data.status === 'waiting') {
         setMessage('Searching for an opponent... Please wait.');
+        setMatchButtonDisabled(true);
+        const pollInterval = 2000;
+        const maxAttempts = Math.ceil(60000 / pollInterval); // stop after ~60s
+        let attempts = 0;
         const poll = setInterval(async () => {
-          const ongoingRes = await fetch('/api/matches/ongoing', {
-            cache: 'no-store',
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`
+          attempts += 1;
+          try {
+            const ongoingRes = await fetch(`/api/matches?userId=${userId}`, { cache: 'no-store' });
+            if (ongoingRes.ok) {
+              const ongoingData = await ongoingRes.json();
+              const ongoing = (ongoingData.matches || []).find((m: MatchSummary) => m.status === 'ongoing');
+              if (ongoing && ongoing._id) {
+                clearInterval(poll);
+                cancelRef.current = null;
+                setMatchButtonDisabled(false);
+                router.push(`/match/${ongoing._id}`);
+                return;
+              }
             }
-          });
-          if (ongoingRes.ok) {
-            const ongoingData = await ongoingRes.json();
-            if (ongoingData.match && ongoingData.match._id) {
-              clearInterval(poll);
-              router.push(`/match/${ongoingData.match._id}`);
-            }
+          } catch {
+            // Ignore polling errors
           }
-        }, 2000);
-      } else if (data.matchId) {
+          if (attempts >= maxAttempts) {
+            clearInterval(poll);
+            setMessage('No opponent found. Please try again later.');
+            setMatchButtonDisabled(false);
+            cancelRef.current = null;
+          }
+        }, pollInterval);
+        cancelRef.current = async () => {
+          clearInterval(poll);
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+              await fetch('/api/matches', { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
+            }
+          } catch {
+            // Ignore cancel errors
+          }
+          setMessage('Search cancelled.');
+          cancelRef.current = null;
+        };
+      } else if (data && data.matchId) {
+        setMatchButtonDisabled(false);
         router.push(`/match/${data.matchId}`);
       } else {
         setMessage('Failed to create match. Please try again.');
+        setMatchButtonDisabled(false);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error starting match:', error);
-        setMessage(error.message || 'Failed to start match');
-      } else {
-        setMessage('Failed to start match');
-      }
+      setMessage(error instanceof Error ? error.message || 'Failed to start match' : 'Failed to start match');
+      setMatchButtonDisabled(false);
     }
   };
 
@@ -138,7 +161,8 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow">Dashboard</h1>
         <button
           onClick={startMatch}
-          className="w-full py-3 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 mb-4"
+          className={`w-full py-3 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 mb-4 ${matchButtonDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={matchButtonDisabled}
         >
           {ongoingMatch ? 'Continue Match' : 'Start New Match'}
         </button>
@@ -148,6 +172,24 @@ export default function DashboardPage() {
           </p>
         )}
         {message && <p className="mt-4 text-red-600 font-semibold text-center">{message}</p>}
+        {message && message.toLowerCase().includes('searching for an opponent') && (
+          <button
+            onClick={async () => {
+              if (cancelRef.current) {
+                try {
+                  await cancelRef.current();
+                } catch (e) {
+                  console.error('Cancel button error:', e);
+                }
+              } else {
+                console.log('Cancel button clicked but no active search to cancel');
+              }
+            }}
+            className="mt-3 w-full py-2 px-4 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+          >
+            Cancel Search
+          </button>
+        )}
       </div>
     </div>
   );
